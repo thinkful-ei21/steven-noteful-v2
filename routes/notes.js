@@ -5,10 +5,6 @@ const express = require('express');
 // Create an notesRouter instance (aka "mini-app")
 const notesRouter = express.Router();
 
-// TEMP: Simple In-Memory Database
-// const data = require('../db/notes');
-// const simDB = require('../db/simDB');
-// const notes = simDB.initialize(data);
 const knex = require('../knex');
 
 // Get All (and search by query)
@@ -33,20 +29,6 @@ notesRouter.get('/', (req, res, next) => {
       res.json(results);
     })
     .catch(err => next(err));
-  // knex.select('id', 'title', 'content', 'folder_id')
-  //   .from('notes')
-  //   .modify(function (queryBuilder) {
-  //     if (searchTerm) {
-  //       queryBuilder.where('title', 'like', `%${searchTerm}%`);
-  //     }
-  //   })
-  //   .orderBy('notes.id')
-  //   .then(results => {
-  //     res.json(results);
-  //   })
-  //   .catch(err => {
-  //     next(err);
-  //   });
 });
 
 // Get a single item
@@ -63,17 +45,6 @@ notesRouter.get('/:id', (req, res, next) => {
     .catch(err => {
       next(err);
     });
-  // notes.find(id)
-  //   .then(item => {
-  //     if (item) {
-  //       res.json(item);
-  //     } else {
-  //       next();
-  //     }
-  //   })
-  //   .catch(err => {
-  //     next(err);
-  //   });
 });
 
 // Put update an item
@@ -96,9 +67,6 @@ notesRouter.put('/:id', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
-  // if (!updateObj.content) {
-  //   const err = new Error('Missing `content` in request ')
-  // }
 
   knex('notes')
     .where('id', id)
