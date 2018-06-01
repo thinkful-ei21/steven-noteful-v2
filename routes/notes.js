@@ -2,8 +2,8 @@
 
 const express = require('express');
 
-// Create an router instance (aka "mini-app")
-const router = express.Router();
+// Create an notesRouter instance (aka "mini-app")
+const notesRouter = express.Router();
 
 // TEMP: Simple In-Memory Database
 // const data = require('../db/notes');
@@ -12,27 +12,45 @@ const router = express.Router();
 const knex = require('../knex');
 
 // Get All (and search by query)
-router.get('/', (req, res, next) => {
-  const { searchTerm } = req.query;
+notesRouter.get('/', (req, res, next) => {
+  const { searchTerm, folderId } = req.query;
 
-  knex.select('id', 'title', 'content')
+  knex.select('notes.id', 'title', 'content', 'folders.id as folderId', 'folders.name as folderName')
     .from('notes')
+    .leftJoin('folders', 'notes.folder_id', 'folders.id')
     .modify(function (queryBuilder) {
       if (searchTerm) {
         queryBuilder.where('title', 'like', `%${searchTerm}%`);
+      }
+    })
+    .modify(function (queryBuilder) {
+      if (folderId) {
+        queryBuilder.where('folder_id', folderId);
       }
     })
     .orderBy('notes.id')
     .then(results => {
       res.json(results);
     })
-    .catch(err => {
-      next(err);
-    });
+    .catch(err => next(err));
+  // knex.select('id', 'title', 'content', 'folder_id')
+  //   .from('notes')
+  //   .modify(function (queryBuilder) {
+  //     if (searchTerm) {
+  //       queryBuilder.where('title', 'like', `%${searchTerm}%`);
+  //     }
+  //   })
+  //   .orderBy('notes.id')
+  //   .then(results => {
+  //     res.json(results);
+  //   })
+  //   .catch(err => {
+  //     next(err);
+  //   });
 });
 
 // Get a single item
-router.get('/:id', (req, res, next) => {
+notesRouter.get('/:id', (req, res, next) => {
   const id = req.params.id;
 
   knex.select('id', 'title', 'content')
@@ -59,7 +77,7 @@ router.get('/:id', (req, res, next) => {
 });
 
 // Put update an item
-router.put('/:id', (req, res, next) => {
+notesRouter.put('/:id', (req, res, next) => {
   const id = req.params.id;
 
   /***** Never trust users - validate input *****/
@@ -78,6 +96,9 @@ router.put('/:id', (req, res, next) => {
     err.status = 400;
     return next(err);
   }
+  // if (!updateObj.content) {
+  //   const err = new Error('Missing `content` in request ')
+  // }
 
   knex('notes')
     .where('id', id)
@@ -95,21 +116,10 @@ router.put('/:id', (req, res, next) => {
     .catch(err => {
       next(err);
     });
-  // notes.update(id, updateObj)
-  //   .then(item => {
-  //     if (item) {
-  //       res.json(item);
-  //     } else {
-  //       next();
-  //     }
-  //   })
-  //   .catch(err => {
-  //     next(err);
-  //   });
 });
 
 // Post (insert) an item
-router.post('/', (req, res, next) => {
+notesRouter.post('/', (req, res, next) => {
   const { title, content } = req.body;
 
   const newItem = { title, content };
@@ -136,7 +146,7 @@ router.post('/', (req, res, next) => {
 });
 
 // Delete an item
-router.delete('/:id', (req, res, next) => {
+notesRouter.delete('/:id', (req, res, next) => {
   const id = req.params.id;
 
   knex('notes')
@@ -150,4 +160,4 @@ router.delete('/:id', (req, res, next) => {
     });
 });
 
-module.exports = router;
+module.exports = notesRouter;
