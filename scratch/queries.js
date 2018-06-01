@@ -1,10 +1,8 @@
 'use strict';
 
-const knex = require('../knex');
-
-let searchTerm = 'gaga';
-knex
-  .select('notes.id', 'title', 'content')
+const knexDatabase = require('../knex');
+knexDatabase
+  .select('notes.id', 'title'/*, 'content'*/)
   .from('notes')
   .modify(queryBuilder => {
     if (searchTerm) {
@@ -14,6 +12,17 @@ knex
   .orderBy('notes.id')
   .then(results => {
     console.log(JSON.stringify(results, null, 2));
+  })
+  .catch(err => {
+    console.error('I am here ' + err);
+  });
+
+knexDatabase
+  .select('id', 'title', 'content')
+  .from('notes')
+  .where({'id': 2})
+  .then(result => {
+    console.log(JSON.stringify(result, null, 2));
   })
   .catch(err => {
     console.error(err);
