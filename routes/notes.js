@@ -4,6 +4,7 @@ const express = require('express');
 
 // Create an notesRouter instance (aka "mini-app")
 const notesRouter = express.Router();
+const hydrateNotes = require('../utils/hydrateNotes');
 
 const knex = require('../knex');
 
@@ -11,9 +12,11 @@ const knex = require('../knex');
 notesRouter.get('/', (req, res, next) => {
   const { searchTerm, folderId } = req.query;
 
-  knex.select('notes.id', 'title', 'content', 'folders.id as folderId', 'folders.name as folderName')
+  knex.select('notes.id', 'title', 'content', 'folders.id as folderId', 'folders.name as folderName', 'tags.id as tagId', 'tags.name as tagName')
     .from('notes')
-    .leftJoin('folders', 'notes.folder_id', 'folders.id')
+    .leftJoin('folders', 'notes.folders_id', 'folders.id')
+    .leftJoin('notes_tags', 'notes.id', 'notes_tags.note_id')
+    .leftJoin('tags', 'notes_tags.tag_id', 'tags.id')
     .modify(function (queryBuilder) {
       if (searchTerm) {
         queryBuilder.where('title', 'like', `%${searchTerm}%`);
@@ -26,7 +29,8 @@ notesRouter.get('/', (req, res, next) => {
     })
     .orderBy('notes.id')
     .then(results => {
-      res.json(results);
+      const hydrated = hydrateNotes(results);
+      res.json(hydrated);
     })
     .catch(err => next(err));
 });
